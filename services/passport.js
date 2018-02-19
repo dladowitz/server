@@ -44,7 +44,7 @@ passport.use(
       clientID: keys.googleClientID,
       clientSecret: keys.googleClientSecret,
       callbackURL: "/auth/google/callback",
-      proxy: true
+      proxy: true //allows google strategy to trust heroku proxy server https
     },
     (accessToken, refreshToken, profile, done) => {
       console.log("\n ----- passport.use() callback running -----");
