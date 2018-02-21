@@ -46,7 +46,7 @@ passport.use(
       callbackURL: "/auth/google/callback",
       proxy: true //allows google strategy to trust heroku proxy server https
     },
-    (accessToken, refreshToken, profile, done) => {
+    async (accessToken, refreshToken, profile, done) => {
       console.log("\n ----- passport.use() callback running -----");
       console.log("accessToken: ", accessToken.slice(0, 20) + ".....");
       console.log("refreshToken: ", refreshToken);
@@ -54,24 +54,23 @@ passport.use(
       console.log("Google email: ", profile.emails[0].value);
       console.log("\n Looking for a user in MongoDB .....");
 
-      User.findOne({ googleId: profile.id }).then(existingUser => {
-        if (existingUser) {
-          console.log("Found a user in Mongo with googleId of: ", profile.id);
-          console.log("--------------------------\n");
+      const existingUser = await User.findOne({ googleId: profile.id });
 
-          done(null, existingUser);
-        } else {
-          console.log("No matching user in Mongo DB.");
+      if (existingUser) {
+        console.log("Found a user in Mongo with googleId of: ", profile.id);
+        console.log("--------------------------\n");
 
-          new User({ googleId: profile.id })
-            .save()
-            .then(() => {
-              console.log("Creating a user with googleId now: ", profile.id);
-              console.log("-------------------------\n");
-            })
-            .then(user => done(null, user));
-        }
-      });
+        done(null, existingUser);
+      } else {
+        console.log("No matching user in Mongo DB.");
+
+        const user = await new User({ googleId: profile.id }).save();
+
+        console.log("Creating a user with googleId now: ", profile.id);
+        console.log("-------------------------\n");
+
+        done(null, user);
+      }
     }
   )
 );
